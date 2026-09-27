@@ -452,6 +452,12 @@ func downloadBinaryDirect(url string, onProgress func(downloaded, total int64), 
 
 // getUpdateTargetPath returns the path where the binary should be placed
 func getUpdateTargetPath() (string, error) {
+	// 本仓库是 fork：面板内的自更新会去拉上游官方 release 并覆盖二进制，
+	// 把邀请码注册等定制功能静默抹掉（docker-entrypoint.sh 会优先执行 /app/data/server）。
+	// 所以这里直接拒绝自更新，升级请走 docker build（见 FORK.md）。
+	return "", errors.New("当前为 fork 版本，已禁用面板内自更新；请使用 docker build 升级（见 FORK.md）")
+
+	// 以下为上游原有逻辑，保留以备将来恢复自更新
 	if isDocker() {
 		// In Docker, write to persistent data directory
 		targetPath := "/app/data/server"
