@@ -172,9 +172,17 @@ func main() {
 	mux.Handle("/api/login/2fa", handler.NewTwoFactorLoginHandler(tokenStore, repo, twoFactorStore))
 	mux.Handle("/api/login/recovery", handler.NewRecoveryLoginHandler(tokenStore, repo, twoFactorStore))
 
+	// 用户自助注册（本仓库增量功能，复用登录同款的验证码与限流）
+	mux.Handle("/api/register/status", handler.NewRegisterStatusHandler(repo, turnstileVerifier))
+	mux.Handle("/api/register", handler.NewRegisterHandler(repo, loginRateLimiter, turnstileVerifier))
+
 	// Admin-only endpoints
 	mux.Handle("/api/admin/credentials", auth.RequireAdmin(tokenStore, userRepo, handler.NewCredentialsHandler(authManager, tokenStore)))
 	mux.Handle("/api/admin/users", auth.RequireAdmin(tokenStore, userRepo, handler.NewUserListHandler(repo)))
+	// 邀请码与注册开关（本仓库增量功能）
+	mux.Handle("/api/admin/invite-codes", auth.RequireAdmin(tokenStore, userRepo, handler.NewInviteCodesHandler(repo)))
+	mux.Handle("/api/admin/invite-codes/", auth.RequireAdmin(tokenStore, userRepo, handler.NewInviteCodesHandler(repo)))
+	mux.Handle("/api/admin/register-settings", auth.RequireAdmin(tokenStore, userRepo, handler.NewRegisterSettingsHandler(repo)))
 	mux.Handle("/api/admin/users/create", auth.RequireAdmin(tokenStore, userRepo, handler.NewUserCreateHandler(repo)))
 	mux.Handle("/api/admin/users/delete", auth.RequireAdmin(tokenStore, userRepo, handler.NewUserDeleteHandler(repo, tokenStore)))
 	mux.Handle("/api/admin/users/status", auth.RequireAdmin(tokenStore, userRepo, handler.NewUserStatusHandler(repo, tokenStore)))
@@ -491,6 +499,7 @@ func getAddr(repo *storage.TrafficRepository) string {
 var reservedFrontendRoutes = map[string]bool{
 	"nodes":        true,
 	"login":        true,
+	"register":     true, // 自助注册页（增量功能）：必须登记，否则会被当成短链探测
 	"rules":        true,
 	"generator":    true,
 	"probe":        true,

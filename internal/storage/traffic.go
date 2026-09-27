@@ -1376,6 +1376,11 @@ CREATE TABLE IF NOT EXISTS rule_providers (
 		return err
 	}
 
+	// 本仓库增量：邀请码表（独立表，不影响上游 schema）
+	if err := r.migrateInviteCodes(); err != nil {
+		return err
+	}
+
 	return nil
 }
 

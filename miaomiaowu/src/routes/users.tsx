@@ -30,7 +30,8 @@ import { api } from '@/lib/api'
 import { handleServerError } from '@/lib/handle-server-error'
 import { profileQueryFn } from '@/lib/profile'
 import { useAuthStore } from '@/stores/auth-store'
-import { Pencil } from 'lucide-react'
+import { Pencil, Ticket } from 'lucide-react'
+import { InviteCodeDialog } from '@/components/invite-code-dialog'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
@@ -97,6 +98,8 @@ function UsersPage() {
   const [resetState, setResetState] = useState<ResetState | null>(null)
   const [deleteUsername, setDeleteUsername] = useState<string | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
+  // 邀请码弹窗（本仓库增量功能）
+  const [inviteOpen, setInviteOpen] = useState(false)
   const [createState, setCreateState] = useState<CreateState>({
     username: '',
     email: '',
@@ -357,15 +360,25 @@ function UsersPage() {
                 <CardTitle>账号列表</CardTitle>
                 <CardDescription>仅管理员可更改用户状态或重置密码。</CardDescription>
               </div>
-              <Button
-                size='sm'
-                onClick={() => {
-                  setCreateState({ username: '', email: '', nickname: '', password: generatePassword(), subscriptionIds: [] })
-                  setCreateOpen(true)
-                }}
-              >
-                新增用户
-              </Button>
+              <div className='flex items-center gap-2'>
+                <Button
+                  size='sm'
+                  variant='outline'
+                  onClick={() => setInviteOpen(true)}
+                >
+                  <Ticket className='mr-2 h-4 w-4' />
+                  创建邀请码
+                </Button>
+                <Button
+                  size='sm'
+                  onClick={() => {
+                    setCreateState({ username: '', email: '', nickname: '', password: generatePassword(), subscriptionIds: [] })
+                    setCreateOpen(true)
+                  }}
+                >
+                  新增用户
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -1025,6 +1038,8 @@ function UsersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <InviteCodeDialog open={inviteOpen} onOpenChange={setInviteOpen} />
     </div>
   )
 }

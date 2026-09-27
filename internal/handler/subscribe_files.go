@@ -1664,8 +1664,16 @@ func (h *subscribeFilesHandler) regenerateFromTemplate(ctx context.Context, user
 	}
 	logger.Info("[模板生成] 读取模板文件", "template", subscribeFile.TemplateFilename, "bytes", len(templateContent))
 
-	// 2. 从节点表获取用户的所有代理节点
-	nodes, err := h.repo.ListNodes(ctx, username)
+	// 2. 从节点表获取代理节点
+	//    与 subscription.go 一致：节点池统一归属首个管理员，
+	//    新注册的管理员（自己名下无节点）需回退，否则重建出的订阅是空的。
+	nodeOwner := username
+	if nodes, err := h.repo.ListNodes(ctx, username); err != nil || len(nodes) == 0 {
+		if adminName, aerr := h.repo.GetAdminUsername(ctx); aerr == nil && strings.TrimSpace(adminName) != "" {
+			nodeOwner = adminName
+		}
+	}
+	nodes, err := h.repo.ListNodes(ctx, nodeOwner)
 	if err != nil {
 		return fmt.Errorf("获取节点列表失败: %w", err)
 	}

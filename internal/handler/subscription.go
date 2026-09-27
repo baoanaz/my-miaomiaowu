@@ -2253,6 +2253,25 @@ func stripDialerProxyGroup(proxyGroupsNode *yaml.Node) {
 }
 
 // sortNodesByNodeOrder 根据用户配置的节点顺序对 storage.Node 切片进行排序
+// resolveNodeOwner 决定订阅生成时从谁名下取节点。
+//
+// 上游假设「全局只有一个管理员」，节点都存在该管理员名下：非管理员去借管理员的节点。
+// 本仓库支持邀请码注册多个管理员，若新管理员仍按自己的用户名取节点，会拿到空列表
+// （节点实际上都在首个管理员名下）。所以这里统一改为：只有用户名自己名下确实有节点时才用
+// 自己，否则回退到首个管理员 —— 这样下列三种用户都能拿到同一份节点池：
+//   - 首个管理员（Baoanaz）：自己名下就有
+//   - 新注册的管理员：自己名下没有 -> 回退
+//   - 普通用户：自己名下没有 -> 回退
+func (h *SubscriptionHandler) resolveNodeOwner(ctx context.Context, username string) string {
+	if nodes, err := h.repo.ListNodes(ctx, username); err == nil && len(nodes) > 0 {
+		return username
+	}
+	if adminName, err := h.repo.GetAdminUsername(ctx); err == nil && strings.TrimSpace(adminName) != "" {
+		return adminName
+	}
+	return username
+}
+
 func sortNodesByNodeOrder(nodes []storage.Node, nodeOrder []int64) {
 	if len(nodeOrder) == 0 || len(nodes) == 0 {
 		return
@@ -2403,13 +2422,9 @@ func (h *SubscriptionHandler) generateFromTemplate(ctx context.Context, username
 	}
 	logger.Info("[模板生成] 读取模板文件", "template", subscribeFile.TemplateFilename, "bytes", len(templateContent))
 
-	// 2. 从节点表获取代理节点（非管理员使用管理员的节点）
-	nodeOwner := username
-	if user, err := h.repo.GetUser(ctx, username); err == nil && user.Role != storage.RoleAdmin {
-		if adminName, err := h.repo.GetAdminUsername(ctx); err == nil {
-			nodeOwner = adminName
-		}
-	}
+	// 2. 从节点表获取代理节点
+	//    节点池统一归属首个管理员：新注册的管理员自己名下没有节点，需要回退，否则订制会是空的。
+	nodeOwner := h.resolveNodeOwner(ctx, username)
 	nodes, err := h.repo.ListNodes(ctx, nodeOwner)
 	if err != nil {
 		return nil, fmt.Errorf("获取节点列表失败: %w", err)
@@ -2615,12 +2630,7 @@ func (h *SubscriptionHandler) generateFromSelectedTags(ctx context.Context, user
 		return nil, errors.New("订阅未配置标签过滤")
 	}
 
-	nodeOwner := username
-	if user, err := h.repo.GetUser(ctx, username); err == nil && user.Role != storage.RoleAdmin {
-		if adminName, err := h.repo.GetAdminUsername(ctx); err == nil {
-			nodeOwner = adminName
-		}
-	}
+	nodeOwner := h.resolveNodeOwner(ctx, username)
 	nodes, err := h.repo.ListNodes(ctx, nodeOwner)
 	if err != nil {
 		return nil, fmt.Errorf("获取节点列表失败: %w", err)

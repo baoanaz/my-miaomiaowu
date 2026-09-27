@@ -17,6 +17,7 @@ import { Route as SubscribeFilesRouteImport } from './routes/subscribe-files'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as RulesRouteImport } from './routes/rules'
 import { Route as RuleProvidersRouteImport } from './routes/rule-providers'
+import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ProbeRouteImport } from './routes/probe'
 import { Route as NodesRouteImport } from './routes/nodes'
 import { Route as LogsRouteImport } from './routes/logs'
@@ -72,6 +73,11 @@ const RulesRoute = RulesRouteImport.update({
 const RuleProvidersRoute = RuleProvidersRouteImport.update({
   id: '/rule-providers',
   path: '/rule-providers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProbeRoute = ProbeRouteImport.update({
@@ -165,6 +171,7 @@ export interface FileRoutesByFullPath {
   '/logs': typeof LogsRoute
   '/nodes': typeof NodesRouteWithChildren
   '/probe': typeof ProbeRoute
+  '/register': typeof RegisterRoute
   '/rule-providers': typeof RuleProvidersRoute
   '/rules': typeof RulesRoute
   '/settings': typeof SettingsRoute
@@ -189,6 +196,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/logs': typeof LogsRoute
   '/probe': typeof ProbeRoute
+  '/register': typeof RegisterRoute
   '/rule-providers': typeof RuleProvidersRoute
   '/rules': typeof RulesRoute
   '/settings': typeof SettingsRoute
@@ -213,6 +221,7 @@ export interface FileRoutesById {
   '/logs': typeof LogsRoute
   '/nodes': typeof NodesRouteWithChildren
   '/probe': typeof ProbeRoute
+  '/register': typeof RegisterRoute
   '/rule-providers': typeof RuleProvidersRoute
   '/rules': typeof RulesRoute
   '/settings': typeof SettingsRoute
@@ -241,6 +250,7 @@ export interface FileRouteTypes {
     | '/logs'
     | '/nodes'
     | '/probe'
+    | '/register'
     | '/rule-providers'
     | '/rules'
     | '/settings'
@@ -265,6 +275,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/logs'
     | '/probe'
+    | '/register'
     | '/rule-providers'
     | '/rules'
     | '/settings'
@@ -288,6 +299,7 @@ export interface FileRouteTypes {
     | '/logs'
     | '/nodes'
     | '/probe'
+    | '/register'
     | '/rule-providers'
     | '/rules'
     | '/settings'
@@ -315,6 +327,7 @@ export interface RootRouteChildren {
   LogsRoute: typeof LogsRoute
   NodesRoute: typeof NodesRouteWithChildren
   ProbeRoute: typeof ProbeRoute
+  RegisterRoute: typeof RegisterRoute
   RuleProvidersRoute: typeof RuleProvidersRoute
   RulesRoute: typeof RulesRoute
   SettingsRoute: typeof SettingsRoute
@@ -382,6 +395,13 @@ declare module '@tanstack/react-router' {
       path: '/rule-providers'
       fullPath: '/rule-providers'
       preLoaderRoute: typeof RuleProvidersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/probe': {
@@ -569,6 +589,7 @@ const rootRouteChildren: RootRouteChildren = {
   LogsRoute: LogsRoute,
   NodesRoute: NodesRouteWithChildren,
   ProbeRoute: ProbeRoute,
+  RegisterRoute: RegisterRoute,
   RuleProvidersRoute: RuleProvidersRoute,
   RulesRoute: RulesRoute,
   SettingsRoute: SettingsRoute,

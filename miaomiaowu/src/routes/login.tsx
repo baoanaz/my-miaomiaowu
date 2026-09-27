@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, redirect, useNavigate, Link } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { Upload, AlertTriangle, ArrowLeft } from 'lucide-react'
 import { api } from '@/lib/api'
@@ -119,6 +119,11 @@ function LoginView() {
     queryKey: ['captcha-config'],
     queryFn: async () => (await api.get('/api/captcha/config')).data as { enabled: boolean; site_key: string },
   })
+  // 注册入口仅在管理员开放注册时显示（本仓库增量功能）
+  const { data: registerStatus } = useQuery({
+    queryKey: ['register-status'],
+    queryFn: async () => (await api.get('/api/register/status')).data as { enabled: boolean },
+  })
   const form = useForm<LoginFormValues>({
     defaultValues: {
       username: '',
@@ -213,6 +218,14 @@ function LoginView() {
             <Button type='submit' className='w-full' disabled={login.isPending}>
               {login.isPending ? '登录中...' : '登录'}
             </Button>
+            {registerStatus?.enabled && (
+              <p className='text-center text-sm text-muted-foreground'>
+                还没有账号？{' '}
+                <Link to='/register' className='font-medium text-primary hover:underline'>
+                  去注册
+                </Link>
+              </p>
+            )}
           </form>
         </CardContent>
       </Card>
