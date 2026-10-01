@@ -5,7 +5,7 @@
 
 - 上游仓库：`upstream` → https://github.com/iluobei/miaomiaowu.git
 - 自研分支：`feat/register`
-- 基线版本：v0.8.5（commit `a8c504c`，2026-09-14）
+- 基线版本：**已合并上游 v0.8.6**（`be11980`，2026-09-27；fork 起点为 v0.8.5 `a8c504c`）
 
 ## 为什么是 fork
 
@@ -83,13 +83,20 @@ npm run build:only    # 只构建前端，产物到 ../internal/web/dist
 ## 跟进上游更新
 
 ```bash
-cd /root/xuwenzheng/mmw-fork
-git fetch upstream
+cd /root/xuwenzheng/vpn/mmw-fork
+git fetch upstream main
 git log --oneline HEAD..upstream/main     # 先看有哪些新提交
 git merge upstream/main                   # 冲突面很小，集中在上面「修改上游文件」那 7 个文件
-docker build -t mmw-fork:register .       # 冲突解决后重建
+
+docker tag mmw-fork:register mmw-fork:register-prev   # 留回滚镜像
+docker build -t mmw-fork:register .
 cd /root/xuwenzheng/vpn/mmw && docker compose up -d
+docker compose ps                          # 确认 healthy
 ```
+
+升级后要复验：面板 `https://154.12.34.214:8443/` 可达、注册页 `/register` 200、
+订阅实时链接仍含 `ai.cviauto.cn: 10.50.11.36` 与 8 节点/99 规则。
+回滚镜像：`docker tag mmw-fork:register-prev mmw-fork:register && docker compose up -d`。
 
 **注意**：面板内的「系统更新」按钮已被**代码层禁用**（`getUpdateTargetPath` 直接返回错误）。
 原因是它会去拉上游官方 release 并写入 `/app/data/server`，而 `docker-entrypoint.sh`
