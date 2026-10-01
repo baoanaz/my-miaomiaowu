@@ -1786,6 +1786,7 @@ const handleUpload = () => {
     // 添加特殊节点
     proxyGroupNames.add('DIRECT')
     proxyGroupNames.add('REJECT')
+    proxyGroupNames.add('REJECT-DROP')
     proxyGroupNames.add('PROXY')
     proxyGroupNames.add('no-resolve')
 
@@ -1830,6 +1831,7 @@ const handleUpload = () => {
       // 添加特殊节点
       proxyGroupNames.add('DIRECT')
       proxyGroupNames.add('REJECT')
+      proxyGroupNames.add('REJECT-DROP')
       proxyGroupNames.add('PROXY')
       proxyGroupNames.add('no-resolve')
 
@@ -1973,7 +1975,7 @@ const handleUpload = () => {
       proxyGroups.forEach(group => {
         group.proxies.forEach(proxy => {
           // 只添加实际节点（不是DIRECT、REJECT等特殊节点，也不是其他代理组）
-          if (!['DIRECT', 'REJECT', 'PROXY', 'no-resolve'].includes(proxy) &&
+          if (!['DIRECT', 'REJECT', 'REJECT-DROP', 'PROXY', 'no-resolve'].includes(proxy) &&
               !proxyGroups.some(g => g.name === proxy)) {
             usedNodeNames.add(proxy)
           }

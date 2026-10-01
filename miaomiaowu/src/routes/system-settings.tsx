@@ -18,6 +18,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Popover,
   PopoverContent,
@@ -1514,6 +1515,10 @@ function SystemSettingsPage() {
 
               <hr className='border-border/50' />
 
+              <FetchAllowListSettings />
+
+              <hr className='border-border/50' />
+
               {/* 登录保护 */}
               <div className='space-y-3'>
                 <h4 className='text-sm font-medium'>登录保护</h4>
@@ -1939,6 +1944,50 @@ function TurnstileSettings() {
         disabled={settings.isLoading || save.isPending}
       >
         {save.isPending ? '保存中...' : '保存 Turnstile 设置'}
+      </Button>
+    </div>
+  )
+}
+
+function FetchAllowListSettings() {
+  const [allowedHosts, setAllowedHosts] = useState('')
+  const settings = useQuery({
+    queryKey: ['fetch-allowlist-settings'],
+    queryFn: async () => (await api.get('/api/admin/security/fetch-allowlist')).data as {
+      allowed_hosts: string
+    },
+  })
+  useEffect(() => {
+    if (!settings.data) return
+    setAllowedHosts(settings.data.allowed_hosts ?? '')
+  }, [settings.data])
+  const save = useMutation({
+    mutationFn: async () => api.put('/api/admin/security/fetch-allowlist', {
+      allowed_hosts: allowedHosts.trim(),
+    }),
+    onSuccess: () => {
+      settings.refetch()
+      toast.success('内网拉取白名单已保存')
+    },
+    onError: handleServerError,
+  })
+  return (
+    <div className='space-y-3'>
+      <div>
+        <h4 className='text-sm font-medium'>内网拉取白名单</h4>
+        <p className='mt-1 text-xs text-muted-foreground'>
+          拉取外部订阅、远程模板时默认拒绝内网和保留地址。如需使用部署在内网的 sub-store 等服务，在此每行填写一项：域名（同时匹配其子域名）、IP 或 CIDR 网段。
+        </p>
+      </div>
+      <Textarea
+        value={allowedHosts}
+        onChange={(event) => setAllowedHosts(event.target.value)}
+        placeholder={'sub.example.com\n192.168.1.10\n10.0.0.0/8'}
+        rows={4}
+        className='font-mono text-xs'
+      />
+      <Button type='button' variant='outline' onClick={() => save.mutate()} disabled={settings.isLoading || save.isPending}>
+        {save.isPending ? '保存中...' : '保存白名单'}
       </Button>
     </div>
   )

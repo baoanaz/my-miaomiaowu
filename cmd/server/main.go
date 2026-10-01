@@ -128,6 +128,9 @@ func main() {
 	// 初始化通知模块
 	sysCfg, _ := repo.GetSystemConfig(context.Background())
 	handler.SetBlockUnknownSubscriptionUA(sysCfg.BlockUnknownSubUA)
+	if allowList, err := repo.GetSystemSetting(context.Background(), handler.SSRFAllowListSettingKey); err == nil {
+		handler.SetSSRFAllowList(allowList)
+	}
 	handler.InitNotifier(notify.Config{
 		Enabled:                sysCfg.NotifyEnabled,
 		BotToken:               sysCfg.TelegramBotToken,
@@ -193,6 +196,7 @@ func main() {
 	securityLogHandler := handler.NewSecurityLogHandler(repo)
 	mux.Handle("/api/admin/security/", auth.RequireAdmin(tokenStore, userRepo, securityLogHandler))
 	mux.Handle("/api/admin/security/turnstile", auth.RequireAdmin(tokenStore, userRepo, handler.NewTurnstileSettingsHandler(repo)))
+	mux.Handle("/api/admin/security/fetch-allowlist", auth.RequireAdmin(tokenStore, userRepo, handler.NewSSRFAllowListSettingsHandler(repo)))
 	mux.Handle("/api/admin/tasks/", auth.RequireAdmin(tokenStore, userRepo, handler.NewTaskLogHandler(repo)))
 	mux.Handle("/api/admin/operations", auth.RequireAdmin(tokenStore, userRepo, handler.NewOperationLogHandler(repo)))
 	mux.Handle("/api/admin/subscriptions", auth.RequireAdmin(tokenStore, userRepo, handler.NewSubscriptionAdminHandler(subscribeDir, repo)))
