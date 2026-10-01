@@ -211,7 +211,6 @@ function SubscriptionPage() {
       <main className='mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 pt-24'>
         <section className='space-y-4 text-center sm:text-left'>
           <h1 className='text-3xl font-semibold tracking-tight'>订阅链接</h1>
-          <p className='mt-2 text-sm font-semibold text-destructive'>转换客户端代理是从substore抄过来的, 没有完全测试，有BUG请联系开发者</p>
         </section>
 
         <section className='mt-8 grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3'>
@@ -226,7 +225,10 @@ function SubscriptionPage() {
 
           {subscribeFiles.map((file) => {
             const Icon = ICON_MAP[file.name] ?? QrCode
-            const subscribeURL = buildSubscriptionURL(file.filename, file.file_short_code, file.custom_short_code)
+            // 默认按 auto（自动识别客户端）生成：复制按钮一点就是 auto 链接，
+            // 需要指定客户端时才点右侧下拉。raw_output 文件不做客户端转换，不带 t。
+            const subscribeURL = buildSubscriptionURL(file.filename, file.file_short_code, file.custom_short_code, 'auto')
+            const rawSubscribeURL = buildSubscriptionURL(file.filename, file.file_short_code, file.custom_short_code)
             // 使用当前显示的URL，如果没有则使用默认URL
             const displayURL = displayURLs[file.id] || subscribeURL
             const clashURL = `clash://install-config?url=${encodeURIComponent(subscribeURL)}`
@@ -296,7 +298,7 @@ function SubscriptionPage() {
                       <Button
                         size='sm'
                         className='w-full col-span-2 transition-transform hover:-translate-y-0.5 hover:shadow-md active:translate-y-0.5 active:scale-95'
-                        onClick={() => handleCopy(file.id, subscribeURL, '订阅链接')}
+                        onClick={() => handleCopy(file.id, rawSubscribeURL, '订阅链接')}
                       >
                         <Copy className='mr-2 size-4' />
                         复制订阅链接
@@ -304,33 +306,42 @@ function SubscriptionPage() {
                     ) : (
                       <>
                         {showCopy ? (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                size='sm'
-                                className='w-full transition-transform hover:-translate-y-0.5 hover:shadow-md active:translate-y-0.5 active:scale-95'
-                              >
-                                <Copy className='mr-2 size-4' />
-                                复制
-                                <ChevronDown className='ml-2 size-4' />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align='end' className='w-56'>
-                              {CLIENT_TYPES.map((client) => {
-                                const clientURL = buildSubscriptionURL(file.filename, file.file_short_code, file.custom_short_code, client.type)
-                                return (
-                                  <DropdownMenuItem
-                                    key={client.type}
-                                    onClick={() => handleCopy(file.id, clientURL, client.name, client.type)}
-                                    className='cursor-pointer'
-                                  >
-                                    <img src={client.icon} alt={client.name} className='mr-2 size-4' />
-                                    {client.name}
-                                  </DropdownMenuItem>
-                                )
-                              })}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                          <div className='flex w-full'>
+                            <Button
+                              size='sm'
+                              className='flex-1 rounded-r-none transition-transform hover:-translate-y-0.5 hover:shadow-md active:translate-y-0.5 active:scale-95'
+                              onClick={() => handleCopy(file.id, subscribeURL, 'Auto（自动识别）', 'auto')}
+                            >
+                              <Copy className='mr-2 size-4' />
+                              复制
+                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  size='sm'
+                                  className='rounded-l-none border-l px-2 transition-transform hover:-translate-y-0.5 hover:shadow-md active:translate-y-0.5 active:scale-95'
+                                  title='选择客户端类型'
+                                >
+                                  <ChevronDown className='size-4' />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align='end' className='w-56'>
+                                {CLIENT_TYPES.map((client) => {
+                                  const clientURL = buildSubscriptionURL(file.filename, file.file_short_code, file.custom_short_code, client.type)
+                                  return (
+                                    <DropdownMenuItem
+                                      key={client.type}
+                                      onClick={() => handleCopy(file.id, clientURL, client.name, client.type)}
+                                      className='cursor-pointer'
+                                    >
+                                      <img src={client.icon} alt={client.name} className='mr-2 size-4' />
+                                      {client.name}
+                                    </DropdownMenuItem>
+                                  )
+                                })}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
                         ) : null}
                         {showImport ? (
                           <Button

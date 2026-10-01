@@ -32,6 +32,7 @@ sidecar 反代改不了页面内容）。所以选择 fork，但把改动面压�
 | `internal/storage/traffic.go` | `migrate()` 末尾 +3 行调用 `migrateInviteCodes()` |
 | `miaomiaowu/src/routes/login.tsx` | 登录页底部加注册入口（仅在开放注册时显示） |
 | `miaomiaowu/src/routes/users.tsx` | 「新增用户」左侧加「创建邀请码」按钮 + 弹窗挂载 |
+| `miaomiaowu/src/routes/subscription.index.tsx` | 删掉「转换客户端代理是从 substore 抄过来的…」警告提示；「复制」拆成主按钮 + 右侧下拉，主按钮默认复制 `t=auto`（`raw_output` 文件不带 `t`） |
 | `internal/handler/subscription.go` | 见下方「上游 bug 修复」 |
 | `internal/handler/subscribe_files.go` | 同上 |
 | `internal/handler/update.go` | `getUpdateTargetPath` 开头直接拒绝自更新（防止覆盖 fork） |
