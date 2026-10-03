@@ -1,5 +1,6 @@
 # Build stage for frontend
-FROM node:20-slim AS frontend-builder
+# 前端产物与目标架构无关,固定在构建机原生架构上跑,避免 arm64 下走 QEMU 模拟
+FROM --platform=$BUILDPLATFORM node:20-slim AS frontend-builder
 
 WORKDIR /app
 
@@ -17,7 +18,8 @@ COPY miaomiaowu/ ./
 RUN npm run build
 
 # Build stage for backend
-FROM golang:1.26-bookworm AS backend-builder
+# Go 原生交叉编译:在构建机架构上编译出 TARGETARCH 的二进制,无需 QEMU
+FROM --platform=$BUILDPLATFORM golang:1.26-bookworm AS backend-builder
 
 # Declare build arguments for multi-platform support
 ARG TARGETOS
@@ -25,11 +27,9 @@ ARG TARGETARCH
 
 WORKDIR /app
 
-# Install build dependencies (gcc needed for CGO)
+# Install build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
-    gcc \
-    libc6-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy go mod files
@@ -44,9 +44,10 @@ COPY . .
 # Copy built frontend from previous stage (vite outputs to /app/internal/web/dist)
 COPY --from=frontend-builder /app/internal/web/dist ./internal/web/dist
 
-# Build backend with optimizations (CGO enabled for SQLite WAL support)
+# Build backend with optimizations
+# SQLite 用的是纯 Go 实现 (modernc.org/sqlite),无需 CGO,和 Release 二进制保持一致
 # Use TARGETOS and TARGETARCH for multi-platform builds
-RUN CGO_ENABLED=1 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} go build \
+RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} go build \
     -trimpath \
     -ldflags="-s -w" \
     -o /app/server \
