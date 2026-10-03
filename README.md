@@ -250,6 +250,9 @@ MIT License
 <details>
 <summary>更新日志</summary>
 
+### v0.8.7 (2026-10-03)
+- 🌈 Docker 镜像 latest 标签始终提供 arm64 架构(#122)
+- 🛠️ fix: mieru 节点使用 port-range 时无法保存配置(#124)
 ### v0.8.6 (2026-09-28)
 - ⬆️ 升级 proxyparser 到 v0.2.9：修复 hy2/hysteria 主机后写端口范围时端口跳跃丢失(#86)
 - 🛠️ fix: 修复中转配置丢失、订阅编辑页 REJECT-DROP 误报缺失，新增内网拉取白名单
