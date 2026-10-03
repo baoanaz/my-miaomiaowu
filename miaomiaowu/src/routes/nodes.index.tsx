@@ -1354,14 +1354,18 @@ function NodesPage() {
           ? (parseYAML(editingClashConfig.config) as Record<string, unknown>)
           : JSON.parse(editingClashConfig.config)
 
-      // 检查必需字段
+      // 检查必需字段 (mieru 用 port-range、hysteria/hysteria2 用 ports 时可省略 port)
       if (
         !parsedConfig.name ||
         !parsedConfig.type ||
         !parsedConfig.server ||
-        !parsedConfig.port
+        (!parsedConfig.port &&
+          !parsedConfig['port-range'] &&
+          !parsedConfig.ports)
       ) {
-        setClashConfigError('配置缺少必需字段: name, type, server, port')
+        setClashConfigError(
+          '配置缺少必需字段: name, type, server, port (或 port-range / ports)'
+        )
         return
       }
 

@@ -717,12 +717,9 @@ func (h *nodesHandler) handleUpdateConfig(w http.ResponseWriter, r *http.Request
 	}
 
 	// Validate required fields
-	requiredFields := []string{"name", "type", "server", "port"}
-	for _, field := range requiredFields {
-		if _, ok := clashConfigMap[field]; !ok {
-			writeBadRequest(w, fmt.Sprintf("配置缺少必需字段: %s", field))
-			return
-		}
+	if missing := missingRequiredClashField(clashConfigMap); missing != "" {
+		writeBadRequest(w, fmt.Sprintf("配置缺少必需字段: %s", missing))
+		return
 	}
 
 	// Get existing node
@@ -1490,4 +1487,21 @@ func (h *nodesHandler) handleUpdateProbeBinding(w http.ResponseWriter, r *http.R
 	respondJSON(w, http.StatusOK, map[string]any{
 		"node": convertNode(node),
 	})
+}
+
+// missingRequiredClashField 返回节点配置缺少的必需字段名,全部齐备时返回空串。
+// 端口字段放宽为 port / port-range / ports 三选一:mieru 用 port-range、
+// hysteria/hysteria2 用 ports 做端口跳跃时,mihomo 允许省略 port(见 GitHub issue #124)。
+func missingRequiredClashField(cfg map[string]interface{}) string {
+	for _, field := range []string{"name", "type", "server"} {
+		if _, ok := cfg[field]; !ok {
+			return field
+		}
+	}
+	for _, field := range []string{"port", "port-range", "ports"} {
+		if _, ok := cfg[field]; ok {
+			return ""
+		}
+	}
+	return "port"
 }
